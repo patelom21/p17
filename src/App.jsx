@@ -1,45 +1,57 @@
 
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function App() {
-  const usernameRef = useRef(null);
-  const passwordRef = useRef(null);
-  const [submittedUser, setSubmittedUser] = useState("");
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  useEffect(() => {
+    async function fetchStudents() {
+      try {
+        const response = await fetch(
+          "https://jsonplaceholder.typicode.com/users"
+        );
 
-    const username = usernameRef.current.value;
+        if (!response.ok) {
+          throw new Error("Failed to fetch students");
+        }
 
-    setSubmittedUser(username);
-  }
+        const data = await response.json();
+
+        setStudents(
+          data.map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email
+          }))
+        );
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchStudents();
+  }, []);
 
   return (
     <div>
-      <h1>Login Form</h1>
+      <h1>Student List</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Enter Username"
-          ref={usernameRef}
-          required
-        />
-        <br /><br />
+      {loading && <p>Loading students...</p>}
 
-        <input
-          type="password"
-          placeholder="Enter Password"
-          ref={passwordRef}
-          required
-        />
-        <br /><br />
+      {error && <p>Error: {error}</p>}
 
-        <button type="submit">Login</button>
-      </form>
-
-      {submittedUser && (
-        <h3>Form submitted successfully for: {submittedUser}</h3>
+      {!loading && !error && (
+        students.map((student) => (
+          <div key={student.id}>
+            <h3>{student.name}</h3>
+            <p>Email: {student.email}</p>
+            <hr />
+          </div>
+        ))
       )}
     </div>
   );
